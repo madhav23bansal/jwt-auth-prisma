@@ -23,6 +23,7 @@ export const authenticateToken = (
 
     if (req.originalUrl.includes("/admin")) {
       if (payload.role !== "ADMIN") {
+        // return res.redirect("/");
         return res
           .status(403)
           .json({ error: "Access denied. Admin permission required." });
