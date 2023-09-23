@@ -7,7 +7,21 @@ const prisma = new PrismaClient();
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: "User with this email already exists" });
+    }
+
+    const userRole = role === "ADMIN" ? "ADMIN" : "MEMBER";
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
@@ -15,12 +29,14 @@ export const registerUser = async (req: Request, res: Response) => {
         name,
         email,
         password: hashedPassword,
+        role: userRole,
       },
     });
 
     const token = generateToken({
       userId: user.id,
       email: user.email,
+      role: userRole,
     });
 
     res.json({ message: "User registered successfully", user, token });
@@ -50,7 +66,11 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = generateToken({ userId: user.id, email: user.email });
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     res.json({ message: "Login successful", token });
   } catch (error) {

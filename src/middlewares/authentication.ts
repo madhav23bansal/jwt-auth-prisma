@@ -21,6 +21,14 @@ export const authenticateToken = (
       return res.status(403).json({ error: "Forbidden" });
     }
 
+    if (req.originalUrl.includes("/admin")) {
+      if (payload.role !== "ADMIN") {
+        return res
+          .status(403)
+          .json({ error: "Access denied. Admin permission required." });
+      }
+    }
+
     req.user = payload;
     next();
   });
